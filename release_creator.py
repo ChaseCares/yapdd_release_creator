@@ -9,7 +9,6 @@ def argParser():
     parser.add_argument('--target_owner_repo', type=str, help='Target owner/repo', required=True)
     parser.add_argument('--local_owner_repo', type=str, help='Local owner/repo', required=True)
     parser.add_argument('--discord_webhook', type=str, help='Discord webhook', default=None, required=False)
-    parser.add_argument('--tag_regex', type=str, help='Regular expression to match tags', default='.*', required=False)
     return parser.parse_args()
 
 
@@ -52,8 +51,8 @@ def compareTags(a, b):
     return True if a == b else False
 
 
-def tagSanityCheck(version, regex=r'.*'):
-    return True if re.match(regex, version) else False
+def tagSanityCheck(version):
+    return True if re.match(r'^\d{4}\.\d{2}(\.\d{0,2})?', version) else False
 
 
 # https://stackoverflow.com/questions/59081778/rules-for-special-characters-in-github-repository-name#59082561
@@ -96,12 +95,12 @@ def main():
     setattr(URL, 'postfix', 'git/matching-refs/tags')
 
     latestTargetTag = getLatestTag(getReleases(URL, args.target_owner_repo, HEADERS).json())
-    if not tagSanityCheck(latestTargetTag, args.tag_regex):
+    if not tagSanityCheck(latestTargetTag):
         notify(f'Latest tag in target repo is not valid: {latestTargetTag}',
                raiseException=True, webhook=args.discord_webhook)
 
     latestLocalTag = getLatestTag(getReleases(URL, args.local_owner_repo, HEADERS).json())
-    if not tagSanityCheck(latestLocalTag, args.tag_regex):
+    if not tagSanityCheck(latestLocalTag):
         notify(f'Latest tag in local repo is not valid: {latestLocalTag}',
                raiseException=True, webhook=args.discord_webhook)
 
